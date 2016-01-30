@@ -62,6 +62,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Script\Environement\Vortex.cs" />
     <Compile Include="Assets\Script\NPC\HumanManager.cs" />
     <Compile Include="Assets\Script\UI\EnergyUI.cs" />
     <Compile Include="Assets\Script\UI\Targetting.cs" />

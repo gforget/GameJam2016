@@ -3,23 +3,30 @@ using System.Collections;
 
 public class MissileControllerJoystick : MonoBehaviour {
 
-
+    [Header("Basic")]
     public int controllerNb = 1;
     public float speed = 2.0f;
-    public float boosterSpeed = 4.0f;
-    public float dashSpeed = 8.0f;
+    public SpriteRenderer ghostSpriteRenderer;
+    public float EnergyToLoseWhenHitWall = 10f;
+    public float EnergyToLoseWhenHitOtherGhost = 10f;
 
-    //[Header "Dash"]
+    [Header("Dash")]
+    public float dashSpeed = 8.0f;
     public float dashDuration = 0.5f;
     public float cooldownDash = 4f;
 
-    //[Header "Dash"]
+    [Header("Booster")]
+    public float boosterSpeed = 4.0f;
     public float boostTimeBeforeInvincible = 2f;
 
-    //[Header "Dash"]
-    public SpriteRenderer ghostSpriteRenderer;
+    [Header("LimitCoordinate")]
+    public float limitLeftX = -8.38f;
+    public float limitRightX = 8.41f;
+    public float limitTopY = 4.5f;
+    public float limitBottomY = -4.53f;
 
-    public float EnergyToLoseWhenHitWall = 10f;
+    [Header("Vortex")]
+    public float vortexImmunityTime = 0.5f;
 
     private Energy energy;
     // Use this for initialization
@@ -35,6 +42,7 @@ public class MissileControllerJoystick : MonoBehaviour {
     private bool dashMode = false;
     private bool dashOnCooldown = false;
     private float currentSpeed;
+    private bool vortexImmune = false;
 
     public bool isInvincible
     {
@@ -51,15 +59,18 @@ public class MissileControllerJoystick : MonoBehaviour {
             }
             else
             {
+                timeBoosting = 0f;
+                currentSpeed = speed;
                 ghostSpriteRenderer.color = Color.white;
             }
         }
     }
+
     private bool _isInvincible;
-
     private float timeBoosting = 0f;
+    private Vector3 newPos;
 
-    void Update () {
+    void Update() {
 
         if (currentSpeed == boosterSpeed)
         {
@@ -72,7 +83,6 @@ public class MissileControllerJoystick : MonoBehaviour {
         else
         {
             isInvincible = false;
-            timeBoosting = 0f;
         }
 
         if (Input.GetButtonDown("Dash" + controllerNb.ToString()) && !dashOnCooldown)
@@ -84,7 +94,6 @@ public class MissileControllerJoystick : MonoBehaviour {
         }
 
         if (!dashMode) {
-
             if (Input.GetAxis("Boost" + controllerNb.ToString()) > 0f)
             {
                 currentSpeed = boosterSpeed;
@@ -107,9 +116,20 @@ public class MissileControllerJoystick : MonoBehaviour {
             transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
         }
 
-        transform.Translate(transform.right * Time.deltaTime * (currentSpeed), Space.World);
-    }
 
+        newPos = transform.position + transform.right * Time.deltaTime * (currentSpeed);
+
+        if (
+            newPos.x > limitLeftX &&
+            newPos.x < limitRightX &&
+            newPos.y < limitTopY &&
+            newPos.y > limitBottomY 
+            )
+        {
+            transform.Translate(transform.right * Time.deltaTime * (currentSpeed), Space.World);
+        }
+        
+    }
 
     void Death()
     {
@@ -123,18 +143,34 @@ public class MissileControllerJoystick : MonoBehaviour {
 
     void OnTriggerEnter2D(Collider2D other)
     {
+
+        if (other.tag == "vortex" && !vortexImmune)
+        {
+            Vortex vortex = other.GetComponent<Vortex>();
+            vortexImmune = true;
+            StartCoroutine(vortexImmunityTimer());
+            transform.position = vortex.teleportationPoint.position;
+        }
+
         MissileControllerJoystick controller = other.GetComponent<MissileControllerJoystick>();
         if (controller != null)
         {
             if (controller.isInvincible && isInvincible)
             {
                 isInvincible = false;
+                controller.isInvincible = false;
                 return;
             }
 
             if (controller.isInvincible && !isInvincible)
             {
                 energy.currentEnergy = 0;
+                return;
+            }
+
+            if (!controller.isInvincible && !isInvincible)
+            {
+                energy.currentEnergy -= EnergyToLoseWhenHitOtherGhost;
                 return;
             }
             return;
@@ -153,8 +189,6 @@ public class MissileControllerJoystick : MonoBehaviour {
             energy.currentEnergy -= EnergyToLoseWhenHitWall;
             return;
         }
-
-        //if () { }
     }
 
 
@@ -178,6 +212,16 @@ public class MissileControllerJoystick : MonoBehaviour {
         dashOnCooldown = false;
     }
 
+    IEnumerator vortexImmunityTimer()
+    {
+        float timer = 0f;
 
+        while (timer < vortexImmunityTime)
+        {
+            timer += Time.deltaTime;
+            yield return null;
+        }
 
+        vortexImmune = false;
+    }
 }

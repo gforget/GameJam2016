@@ -1,7 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class wall : MonoBehaviour {
+public class Vortex : MonoBehaviour {
+
+    public Transform teleportationPoint;
 
 	// Use this for initialization
 	void Start () {
@@ -12,5 +14,4 @@ public class wall : MonoBehaviour {
 	void Update () {
 	
 	}
-
 }
