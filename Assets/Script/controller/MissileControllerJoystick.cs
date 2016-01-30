@@ -60,19 +60,19 @@ public class MissileControllerJoystick : MonoBehaviour {
             else
             {
                 timeBoosting = 0f;
-                currentSpeed = speed;
                 ghostSpriteRenderer.color = Color.white;
             }
         }
     }
 
     private bool _isInvincible;
+    private bool isBoosting = false;
     private float timeBoosting = 0f;
     private Vector3 newPos;
 
     void Update() {
 
-        if (currentSpeed == boosterSpeed)
+        if (isBoosting)
         {
             timeBoosting += Time.deltaTime;
             if (timeBoosting > boostTimeBeforeInvincible && !isInvincible)
@@ -98,11 +98,13 @@ public class MissileControllerJoystick : MonoBehaviour {
             {
                 currentSpeed = boosterSpeed;
                 energy.toggleBoostMode(true);
+                isBoosting = true;
             }
             else
             {
                 currentSpeed = speed;
                 energy.toggleBoostMode(false);
+                isBoosting = false;
             }
 
             if (Input.GetAxis("Horizontal" + controllerNb.ToString()) != 0f || Input.GetAxis("Vertical" + controllerNb.ToString()) != 0f)
